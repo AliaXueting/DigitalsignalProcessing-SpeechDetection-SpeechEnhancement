@@ -1,0 +1,71 @@
+思路：
+Task1 Loading Audio into python: 可以用wave包  scipy包  librosa库等等，下面是wave包具体示例
+读取wav文件：利用wave包读取wav格式文件:w = wave.open(filename,"rb")
+frames = w.getnframes()
+data = w.readframes(frames)----这里的data是一个bytes格式的数据
+data2 = np.fromstring(data,dtype=np.int16)----转化为数组
+
+1.利用numpy对data2进行归一化处理得到data3，而后利用matplotlib包进行plot 画出时域图
+2.利用numpy中的fft进行傅里叶变换 求得分贝值。
+xs = data3[:fft_size]---fft_size是采样的点数，比如512
+xf = np.fft.rfft(xs)/fft_size ---xf是幅度值
+xfp = 20*np.log10(np.clip(np.abs(xf), 1e-20, 1e1000)) ----取对数求得分贝值。防止幅值为0，先利用clip剪裁幅度，再化成分贝。
+最后利用利用matplotlib包进行plot画出频率-分贝图
+
+以下示例代码是通过scipy包实现获取时域图和频域图的代码
+# -*- coding: utf-8 -*-
+
+import scipy.io.wavfile as wf
+import numpy as np
+import matplotlib.pyplot as plt
+
+fs, audio = wf.read("/Users/matzoh/Downloads/homework/44khz16bit.wav")
+# fs 采样率
+# audio 数据
+
+# creating time axis
+plt.subplot(2, 1, 1)
+time = np.linspace(0, len(audio)/fs, len(audio))
+plt.plot(time, audio)
+
+# Adding labels
+plt.title('Sound recording')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('amplitude')
+
+# plt.plot(time, audio)
+# ##freqaxis = np.linspace(0, fs, len(audio))
+# creating frequency domain
+plt.subplot(2, 1, 2)
+fft = np.abs(np.fft.fft(audio))
+# plt.plot(freqaxis, fft)
+fft2 = fft[0:int(len(fft)/2)]
+freqaxis2 = np.linspace(0, fs, len(audio)/2)
+fft3 = np.fft.fft(audio)
+fft3 = np.abs(fft2)/len(fft2)
+
+fft3 = 20*np.log10(fft2)
+
+plt.plot(fft2)
+plt.loglog(fft2)
+
+plt.show()
+
+
+
+Task2 Audio Analysis:
+from scipy.signal import find_peaks,利用find_peaks去做 找到peaks
+元音：频谱中有明显的峰值点出现的频率
+辅音：频谱没有周期分量，体现在频谱中峰值点之间的间隔是随机的
+通过频谱图 能找到声音信号的频率范围
+
+Task3:语音增强
+通过傅里叶变换提高语音信号的质量。 基于傅里叶变换的语音增强算法有很多 网上也有很多参考代码，举几个例子：
+基于短时分数阶傅里叶变换的语音增强算法、用于语音增强的快速傅里叶卷积法  基于子带分解的分数傅里叶变换语音增强算法
+
+思路1：通过使用快速傅立叶变换来增加语音谐波的幅度，从而提高语音质量：将时域信号转换为频域，然后处理频谱，然后将其转换回时域。
+思路2：快速傅里叶卷积的神经网络结构 来进行语音增强
+
+
+Task4 Vowel Detector: 对元音进行检测  对语音信号进行元音检测。比如对A O E三个元音进行检测。
+算法：自组织神经网络元音识别   BP神经网络元音检测   基于K-L变换和共振峰参数标准化的元音识别等等，具体选用哪种元音检测算法讨论下
